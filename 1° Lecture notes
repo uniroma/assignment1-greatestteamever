@@ -1,2 +1,7 @@
-# Prices are computed monthly. Seasonally adjusted means that, for example, we want to remove the deviation of Christmas shopping (inflation) or August less shopping (deflation).
-# On FRED data we can modify data, for example modify the frequency
+# FRED data is the most influential source of macroeconomic data. Prices are computed monthly. Seasonally adjusted means that,  
+for example, we want to remove the deviation of Christmas shopping (inflation) or August less shopping (deflation).
+
+# On FRED data we can modify data, for example: modify the frequency (we could see the monthly inflation rate, 
+so compared to the previous month).
+
+# FRED-MD is a monthly database (https://research.stlouisfed.org/wp/more/2015-012). In this paper 
