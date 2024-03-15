@@ -34,7 +34,7 @@ with the previous observations).
 # ASSIGNMENT (continued): The lead (Y,1) means that Y takes the value of the next observation, differently from the lag t-1  
 which takes the value of the previous observation. The capital T is the perid with the last observation, last data available. 
 Firstly, we should change the model (i.e. choose other better variables), then use it to forecast the 3 indicated variables. 
-Then we should run a 
+Then we should run a "back-test"
 
 
 
