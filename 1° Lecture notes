@@ -8,4 +8,10 @@ so compared to the previous month).
 able to replicate (https://s3.amazonaws.com/real.stlouisfed.org/wp/2015/2015-012.pdf), at page 28 we can see in the  
 table the FRED mnemonic column and also the universal GSI mnemonic.
 
+# The flash estimate of inflation is made every month (usually the 10th day in EURO area) and then it's revised with more precision.
 
+# Forecasting is: given the information available today, I want to create a model to predict the future values.
+
+# ALFRED is an archive of the "vintage" versions of data that were available in certaind dates. This is useful because  
+data are always revised and updated with more precision, so without ALFRED it might be impossible to retrieve the actual data  
+produced in the past.
