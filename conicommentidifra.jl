@@ -131,7 +131,8 @@ X = Matrix(df_cleaned[!, [:CPIAUCSL, :FEDFUNDS]])
 
                             #***    I THINK THE ASSIGNMENT STARTS FROM HERE    ***#
 
-h = 1 # Sincero non ho capito perchè ha messo queste variabili
+# questi sono i lag
+h = 1 
 p = 4
 r = 4
 
