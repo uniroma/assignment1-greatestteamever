@@ -75,6 +75,14 @@ end
     Then we define the if else (with elseif nested in it).
     if the argument code meets a certain condition we perform the transformation as said in the FRED document
 =#
+#=  TRASFORMATION 6 MEANING(according to chatgpt) 
+ Δ^2: This notation represents the second-order finite difference operator. The finite difference operator is commonly used in numerical 
+analysis to approximate derivatives of functions. The second-order finite difference operator, denoted as Δ^2, calculates the second 
+derivative of a function.
+log(x): This represents the natural logarithm function. It's a mathematical function that gives you the power to which the base 'e' 
+(approximately 2.71828) must be raised to produce the number x.
+When you combine these two, Δ^2(log(x)), you're essentially taking the second derivative of the natural logarithm of x.
+In mathematical terms, if f(x) = log(x), then Δ^2(log(x)) would represent the second derivative of f(x) with respect to x, or f''(x).=#
 
 function lag(v::Vector, l::Integer)
     nan = [NaN for _ in 1:l]
