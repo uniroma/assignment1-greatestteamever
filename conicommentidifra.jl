@@ -82,7 +82,8 @@ function lag(v::Vector, l::Integer)
 end
 #=  We create the lag function, this takes two arguments a vector v and an Ineger l
     we create a vector nan of dimension l full of Nan.
-    then we return a vector which is made by as many Nan as l  and then all the values of vector v strating from l to the end.
+    then we return a vector which is made by as many Nan as l  and then all the values of vector v starting from l to the end-l.
+    so the new vector has l time "Nan" at the beginning and then all the values of the original vector minus the last l values
     this return the lagged vector. lag of period l
 =#
 
