@@ -169,3 +169,26 @@ for ols regression =#
 
 # Produce the One-step ahead forecast and convert it to percentage
 forecast = (X_T' * beta_ols) * 100
+
+
+#= --------THIS STARTS OUR SCRIPT--------
+this is a first try to forecast the inflation growth=#
+F = df_cleaned3[!,"CPIAUCSL"]
+
+F_lagged = hcat([lag(F, i) for i in 0:p]...)
+
+F_target = lead(F,1)
+
+F_reg = F_target[p+1:(end-h)]
+
+E = Matrix(df_cleaned3[!,[:UNRATE,:M1SL,:FEDFUNDS]])
+
+E_lagged = hcat([lag(E[:, j], i) for i in 0:r, j in 1:size(E, 2)]...)
+
+E_t = [1;[F_lagged E_lagged][end,:]]
+
+E_reg = hcat(ones(size(F_reg, 1)), F_lagged[max(p,r)+1:(end-h),:], E_lagged[max(p,r)+1:(end-h), :])
+
+beta0ls = E_reg\F_reg
+
+f0recast = (E_t'*beta0ls)*100
