@@ -142,6 +142,9 @@ Y_target = lead(Y, 1)
 Y_lagged = hcat([lag(Y, i) for i in 0:p]...)
 X_lagged = hcat([lag(X[:, j], i) for i in 0:r, j in 1:size(X, 2)]...)
 
+#= I puntini servono a unire i vettori in una gigola matrice;
+senza di questi il risultato è una matrice 5x1 in cui ogni riga è un vettore 1x700ish =#
+
 ## For the forecast last row of the X which will get removed later
 X_T = [1; [Y_lagged X_lagged][end,:]]
 
