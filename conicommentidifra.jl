@@ -154,6 +154,8 @@ X_reg = hcat(ones(size(Y_reg, 1)), Y_lagged[max(p,r)+1:(end-h),:], X_lagged[max(
 
 # OLS estimator using the Normal Equation
 beta_ols = X_reg \ Y_reg
+#= here he does an ols with x_reg as independent variable and y_reg as dependent. "\" is the command in julia
+for ols regression =#
 
 # Preparing the last row for forecast (ensure correct indexing for Julia)
 
