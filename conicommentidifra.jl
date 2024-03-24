@@ -192,3 +192,48 @@ E_reg = hcat(ones(size(F_reg, 1)), F_lagged[max(p,r)+1:(end-h),:], E_lagged[max(
 beta0ls = E_reg\F_reg
 
 f0recast = (E_t'*beta0ls)*100
+
+
+
+
+function prev(G::Matrix,L::Vector)
+	 L_target = lead(L, 1)
+     L_lagged = hcat([lag(L, i) for i in 0:p]...)
+     G_lagged = hcat([lag(G[:, j], i) for i in 0:r, j in 1:size(G, 2)]...)
+
+## For the forecast last row of the X which will get removed later
+     G_T = [1; [L_lagged G_lagged][end,:]]
+
+     L_reg = L_target[max(p,r)+1:(end-h)]
+     G_reg = hcat(ones(size(L_reg, 1)), L_lagged[max(p,r)+1:(end-h),:], G_lagged[max(p,r)+1:(end-h), :])
+
+# OLS estimator using the Normal Equation
+     beta_ols = G_reg \ L_reg
+
+# Preparing the last row for forecast (ensure correct indexing for Julia)
+
+
+# Produce the One-step ahead forecast and convert it to percentage
+   return forecast = (G_T' * beta_ols) * 100
+end
+
+# ╔═╡ 8f50899d-e8db-40bc-86d8-5574e7ff60e5
+prev(X,Y)
+
+foreresult = Dict()
+ dat4=()
+# ╔═╡ 1a482804-b3bc-42e2-b013-04796579deca
+function dammiladata(i::Integer,v::Vector)
+    dat4 = v[i]
+end
+
+for tt in 772:size(df_cleaned3,1)
+  subspace = df_cleaned[1:tt,:]
+	A=Matrix(subspace[!,[:CPIAUCSL,:FEDFUNDS]])
+    B=subspace[!,:INDPRO]
+    dammiladata(tt,subspace[!,:sasdate])
+    l = prev(A,B)
+    merge!(foreresult,Dict(dat4=>l))
+end
+println(foreresult)
+ dammiladata(1,df_cleaned3[!,:sasdate])
