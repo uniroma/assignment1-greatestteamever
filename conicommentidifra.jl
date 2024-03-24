@@ -75,6 +75,14 @@ end
     Then we define the if else (with elseif nested in it).
     if the argument code meets a certain condition we perform the transformation as said in the FRED document
 =#
+#=  TRASFORMATION 6 MEANING(according to chatgpt) 
+ Δ^2: This notation represents the second-order finite difference operator. The finite difference operator is commonly used in numerical 
+analysis to approximate derivatives of functions. The second-order finite difference operator, denoted as Δ^2, calculates the second 
+derivative of a function.
+log(x): This represents the natural logarithm function. It's a mathematical function that gives you the power to which the base 'e' 
+(approximately 2.71828) must be raised to produce the number x.
+When you combine these two, Δ^2(log(x)), you're essentially taking the second derivative of the natural logarithm of x.
+In mathematical terms, if f(x) = log(x), then Δ^2(log(x)) would represent the second derivative of f(x) with respect to x, or f''(x).=#
 
 function lag(v::Vector, l::Integer)
     nan = [NaN for _ in 1:l]
@@ -82,7 +90,8 @@ function lag(v::Vector, l::Integer)
 end
 #=  We create the lag function, this takes two arguments a vector v and an Ineger l
     we create a vector nan of dimension l full of Nan.
-    then we return a vector which is made by as many Nan as l  and then all the values of vector v strating from l to the end.
+    then we return a vector which is made by as many Nan as l  and then all the values of vector v starting from l to the end-l.
+    so the new vector has l time "Nan" at the beginning and then all the values of the original vector minus the last l values
     this return the lagged vector. lag of period l
 =#
 
@@ -131,7 +140,8 @@ X = Matrix(df_cleaned[!, [:CPIAUCSL, :FEDFUNDS]])
 
                             #***    I THINK THE ASSIGNMENT STARTS FROM HERE    ***#
 
-h = 1 # Sincero non ho capito perchè ha messo queste variabili
+# questi sono i lag
+h = 1 
 p = 4
 r = 4
 
@@ -141,6 +151,9 @@ Y_target = lead(Y, 1)
 Y_lagged = hcat([lag(Y, i) for i in 0:p]...)
 X_lagged = hcat([lag(X[:, j], i) for i in 0:r, j in 1:size(X, 2)]...)
 
+#= I puntini servono a unire i vettori in una singola matrice;
+senza di questi il risultato è una matrice 5x1 in cui ogni riga è un vettore 1x700ish =#
+
 ## For the forecast last row of the X which will get removed later
 X_T = [1; [Y_lagged X_lagged][end,:]]
 
@@ -149,8 +162,78 @@ X_reg = hcat(ones(size(Y_reg, 1)), Y_lagged[max(p,r)+1:(end-h),:], X_lagged[max(
 
 # OLS estimator using the Normal Equation
 beta_ols = X_reg \ Y_reg
+#= here he does an ols with x_reg as independent variable and y_reg as dependent. "\" is the command in julia
+for ols regression =#
 
 # Preparing the last row for forecast (ensure correct indexing for Julia)
 
 # Produce the One-step ahead forecast and convert it to percentage
 forecast = (X_T' * beta_ols) * 100
+
+
+#= --------THIS STARTS OUR SCRIPT--------
+this is a first try to forecast the inflation growth=#
+F = df_cleaned3[!,"CPIAUCSL"]
+
+F_lagged = hcat([lag(F, i) for i in 0:p]...)
+
+F_target = lead(F,1)
+
+F_reg = F_target[p+1:(end-h)]
+
+E = Matrix(df_cleaned3[!,[:UNRATE,:M1SL,:FEDFUNDS]])
+
+E_lagged = hcat([lag(E[:, j], i) for i in 0:r, j in 1:size(E, 2)]...)
+
+E_t = [1;[F_lagged E_lagged][end,:]]
+
+E_reg = hcat(ones(size(F_reg, 1)), F_lagged[max(p,r)+1:(end-h),:], E_lagged[max(p,r)+1:(end-h), :])
+
+beta0ls = E_reg\F_reg
+
+f0recast = (E_t'*beta0ls)*100
+
+
+
+
+function prev(G::Matrix,L::Vector)
+	 L_target = lead(L, 1)
+     L_lagged = hcat([lag(L, i) for i in 0:p]...)
+     G_lagged = hcat([lag(G[:, j], i) for i in 0:r, j in 1:size(G, 2)]...)
+
+## For the forecast last row of the X which will get removed later
+     G_T = [1; [L_lagged G_lagged][end,:]]
+
+     L_reg = L_target[max(p,r)+1:(end-h)]
+     G_reg = hcat(ones(size(L_reg, 1)), L_lagged[max(p,r)+1:(end-h),:], G_lagged[max(p,r)+1:(end-h), :])
+
+# OLS estimator using the Normal Equation
+     beta_ols = G_reg \ L_reg
+
+# Preparing the last row for forecast (ensure correct indexing for Julia)
+
+
+# Produce the One-step ahead forecast and convert it to percentage
+   return forecast = (G_T' * beta_ols) * 100
+end
+
+# ╔═╡ 8f50899d-e8db-40bc-86d8-5574e7ff60e5
+prev(X,Y)
+
+foreresult = Dict()
+ dat4=()
+# ╔═╡ 1a482804-b3bc-42e2-b013-04796579deca
+function dammiladata(i::Integer,v::Vector)
+    dat4 = v[i]
+end
+
+for tt in 772:size(df_cleaned3,1)
+  subspace = df_cleaned[1:tt,:]
+	A=Matrix(subspace[!,[:CPIAUCSL,:FEDFUNDS]])
+    B=subspace[!,:INDPRO]
+    dammiladata(tt,subspace[!,:sasdate])
+    l = prev(A,B)
+    merge!(foreresult,Dict(dat4=>l))
+end
+println(foreresult)
+ dammiladata(1,df_cleaned3[!,:sasdate])
