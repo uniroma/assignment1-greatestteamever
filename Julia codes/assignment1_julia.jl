@@ -5,6 +5,7 @@ using Dates
 using LinearAlgebra
 using Plots
 
+#Prova
 # Load the dataset
 df = CSV.read("/Users/gragusa/Downloads/current.csv", DataFrame)
 
