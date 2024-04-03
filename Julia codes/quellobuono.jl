@@ -3,7 +3,7 @@ using DataFrames
 using Dates
 using LinearAlgebra
 using Plots
-
+using Statistics
 #Prova
 # Load the dataset
 df = CSV.read("/Users/edoardodicosimo/Documents/Magistrale/ctfme/current.csv", DataFrame)
@@ -85,16 +85,16 @@ df_cleaned = df_cleaned[3:end, :]
 #target = :INDPRO
 #x_var = [:CPIAUCSL, :FEDFUNDS]
 
-H = [1 4 8]
-p = 4
-end_date = "12/01/1999"
-end_date = Dates.Date.(end_date,date_format)
+#end_date = "12/01/1999"
 
-y_hat = []
-y_actual = []
 
-function calcolaforecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS])
-   
+
+#orrore2 = []
+
+
+function calcolaforecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, end_date = Dates.Date("12/01/1999", date_format))
+    y_hat = []
+    y_actual = []
     rt_df = filter(row -> row[:sasdate] <= end_date, df_cleaned)
     
 
@@ -124,24 +124,35 @@ function calcolaforecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS])
         push!(y_hat,forecast)  
         #println(y_hat)
     end
-
-#println(y_hat)
-return y_actual, y_hat
-
-end
-
-calcolaforecast()
-
-
-#println(y_raw)
-
-function erroraccio()
     y_actualissimo = vcat(y_actual[1],y_actual[2],y_actual[3])
-    errore = y_actualissimo[!,:INDPRO] - y_hat
-    erroresqrd = ((sum(errore))^2)/size(errore,1)
-    return erroresqrd
+    errore = y_hat - y_actualissimo[!,target] 
+    errore = hcat(errore)
+    return errore
+    
+
 end
-erroraccino = erroraccio()
-println(erroraccino)
-println(y_hat)
+erroraccio = calcolaforecast(:INDPRO,[:CPIAUCSL, :FEDFUNDS, :BUSLOANS, :OILPRICEx])
+println(erroraccio)
+
+function calcola_errore(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, t0 = "12/01/1999")
+
+    t0 = Dates.Date(t0,date_format)
+    e = []
+    T = []
+    typeof(t0)
+
+    for j in 1:10
+        t0 = t0 + Dates.Month(1)
+        ehat = calcolaforecast(target,x_var,H,p, t0)
+        ehat = ehat'
+        push!(e,ehat)
+        push!(T,t0)
+    end
+    a = vcat(e...)
+    sqrd_a = a .^ 2
+    mean_sqrd_a = (mean(sqrd_a, dims=1)) .^(0.5)
+    return  mean_sqrd_a
+
+end
+regressione1 = calcola_errore(:INDPRO, [:CPIAUCSL, :TB3MS])
 
