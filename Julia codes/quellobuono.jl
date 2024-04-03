@@ -155,4 +155,7 @@ function calcola_errore(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 
 
 end
 regressione1 = calcola_errore(:INDPRO, [:CPIAUCSL, :TB3MS])
+regressione2 = calcola_errore(:CPIAUCSL, [:M1SL, :UNRATE, :FEDFUNDS, :OILPRICEx])
+regressione3 = calcola_errore(:FEDFUNDS, [:CPIAUCSL, :UNRATE, :INDPRO])
+
 
