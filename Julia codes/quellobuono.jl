@@ -82,6 +82,8 @@ end
 ## These remove the missing values at the top of the dataframe
 df_cleaned = df_cleaned[3:end, :]
 
+#target = :INDPRO
+#x_var = [:CPIAUCSL, :FEDFUNDS]
 
 H = [1 4 8]
 p = 4
@@ -89,35 +91,23 @@ end_date = "12/01/1999"
 end_date = Dates.Date.(end_date,date_format)
 
 y_hat = []
+y_actual = []
 
-
-function calcolaforecast(target::Vector,x_var::Matrix)
+function calcolaforecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS])
    
     rt_df = filter(row -> row[:sasdate] <= end_date, df_cleaned)
-    y_actual = []
+    
 
     for h in H
         os = end_date + Dates.Month(h)
         push!(y_actual, (filter(row -> row[:sasdate] == os, df_cleaned)))
-        #push!(y_actual, df_cleaned[df_cleaned[!,:sasdate] .== os, target] .* 100)
-        #return rigayact = df_cleaned[]
-        
     end
-    y_actualissimo = vcat(y_actual[1],y_actual[2],y_actual[3])
-    
-   @show(y_actualissimo)
-
-    #return y_actualissimo
-    #y_raw = df_cleaned[!, :INDPRO]
-
-    #x_raw = Matrix(df_cleaned[!, [:CPIAUCSL, :FEDFUNDS]])
-
-    x_raw = x_var
-    y_raw = target
-    
+    y_raw = rt_df[!, target]
+    x_raw = select(rt_df, x_var)
+    #return y_raw, x_raw
+    #println(y_raw)
     
 
-    Y_target = lead(y_raw, 1)
     Y_lagged = hcat([lag(y_raw, p) for i in 1:p]...)
     X_lagged = hcat([lag(x_raw[:, j], i) for j in 1:size(x_raw, 2) for i in 1:p]...)
     
@@ -131,17 +121,27 @@ function calcolaforecast(target::Vector,x_var::Matrix)
         X_ = X[p+1:(end-h), :]
         beta_ols = X_ \ y
         forecast = (X_T' * beta_ols) * 100
-
-        push!(y_hat,forecast)
-        
+        push!(y_hat,forecast)  
+        #println(y_hat)
     end
-    return y_hat
 
-
-    errore = y_actualissimo[!,:INDPRO] - y_hat
-    erroresqrd = ((sum(errore))^2)/size(errore,1)
-    return erroresqrd
+#println(y_hat)
+return y_actual, y_hat
 
 end
 
-calcolaforecast(df_cleaned[!, :INDPRO],Matrix(df_cleaned[!, [:CPIAUCSL, :FEDFUNDS]]))
+calcolaforecast()
+
+
+#println(y_raw)
+
+function erroraccio()
+    y_actualissimo = vcat(y_actual[1],y_actual[2],y_actual[3])
+    errore = y_actualissimo[!,:INDPRO] - y_hat
+    erroresqrd = ((sum(errore))^2)/size(errore,1)
+    return erroresqrd
+end
+erroraccino = erroraccio()
+println(erroraccino)
+println(y_hat)
+
