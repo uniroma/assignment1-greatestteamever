@@ -142,14 +142,22 @@ function compute_error(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4
 end
 
 # COMPUTING THE 3 DIFFERENT REGRESSIONS
-regression1 = compute_error(:INDPRO, [:CPIAUCSL, :TB3MS])
-println(regression1)
-
-regression2 = compute_error(:CPIAUCSL, [:M1SL, :UNRATE, :FEDFUNDS, :OILPRICEx])
-println(regression2)
-
-regression3 = compute_error(:FEDFUNDS, [:CPIAUCSL, :UNRATE, :INDPRO])
-println(regression3)
+regressione1 = calcola_errore(:INDPRO, [:CPIAUCSL, :TB3MS, :AWHMAN])
+println(regressione1)
+regressione2 = calcola_errore(:CPIAUCSL, [:M1SL, :UNRATE, :FEDFUNDS, :OILPRICEx])
+println(regressione2)
+regressione3 = calcola_errore(:FEDFUNDS, [:CPIAUCSL, :UNRATE, :INDPRO, :TB3MS, :INVEST, :DTCTHFNM, :NONREVSL, :PCEPI])
+println(regressione3)
+ 
+#= Regressors of the last regression:
+Inflation
+unemployment rate
+industrial production
+3-Month Treasury Bill
+Securities in Bank Credit at All Commercial Banks
+Total Consumer Loans and Leases Outstanding
+Total non revolving credit
+Personal consumption expenditures =# 
 
 
 
