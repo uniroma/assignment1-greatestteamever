@@ -6,7 +6,7 @@ using Plots
 using Statistics
 # WORK WITH THE DATASET
 ### Load the dataset
-df = CSV.read("C:\\Users\\paose\\Desktop\\Working directories\\Julia\\Computational tools for Macroeconometrics\\Assignment_1_Macroeconometrics\\Dataset.csv", DataFrame)
+df = CSV.read("C:\\Users\\tokyo\\Downloads\\current.csv", DataFrame)
 
 ### Clean the DataFrame by removing the row with transformation codes
 df_cleaned = df[2:end, :]
@@ -78,9 +78,32 @@ end
 ### The transformation create missing values at the top, so let's remove them
 df_cleaned = df_cleaned[3:end, :]
 
+function compute_forecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4)
+    y_hat=[]
+
+    y_raw = df_cleaned[!, target]
+    x_raw = select(df_cleaned, x_var)    
+
+    Y_lagged = hcat([lag(y_raw, p) for i in 1:p]...)
+    X_lagged = hcat([lag(x_raw[:, j], i) for j in 1:size(x_raw, 2) for i in 1:p]...)
+    
+    X = hcat(ones(size(Y_lagged, 1)), Y_lagged, X_lagged)
+  
+    X_T = X[end, :]
+    
+    for h in H
+        y_h = lead(y_raw, h)
+        y  = y_h[p+1:(end-h)]
+        X_ = X[p+1:(end-h), :]
+        beta_ols = X_ \ y
+        forecast = (X_T' * beta_ols) * 100
+        push!(y_hat,forecast)  
+    end
+    return y_hat
+end
 
 # CREATE THE FORECASTING FUNCTION
-function compute_forecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, end_date = Dates.Date("12/01/1999", date_format))
+function compute_error(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, end_date = Dates.Date("12/01/1999", date_format))
     y_hat = []
     y_actual = []
     rt_df = filter(row -> row[:sasdate] <= end_date, df_cleaned)
@@ -120,16 +143,16 @@ function compute_forecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [
 end
 
 # CREATE THE ERROR-COMPUTING FUNCTION
-function compute_error(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, t0 = "12/01/1999")
+function evaluate_model(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, t0 = "12/01/1999")
 
     t0 = Dates.Date(t0,date_format)
     e = []
     T = []
-    typeof(t0)
+   
 
     for j in 1:10
         t0 = t0 + Dates.Month(1)
-        ehat = compute_forecast(target,x_var,H,p, t0)
+        ehat = compute_error(target,x_var,H,p, t0)
         ehat = ehat'
         push!(e,ehat)
         push!(T,t0)
@@ -142,22 +165,17 @@ function compute_error(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4
 end
 
 # COMPUTING THE 3 DIFFERENT REGRESSIONS
-regressione1 = calcola_errore(:INDPRO, [:CPIAUCSL, :TB3MS, :AWHMAN])
+forecast_INDPRO = compute_forecast(:INDPRO, [:CPIAUCSL, :TB3MS, :AWHMAN])
+println(forecast_INDPRO)
+forecast_CPI= compute_forecast(:CPIAUCSL, [:M1SL, :UNRATE, :FEDFUNDS, :OILPRICEx])
+println(forecast_CPI)
+forecast_FF = compute_forecast(:FEDFUNDS, [:CPIAUCSL, :UNRATE, :INDPRO, :TB3MS, :INVEST, :DTCTHFNM, :NONREVSL, :PCEPI])
+println(forecast_FF)
+
+regressione1 = evaluate_model(:INDPRO, [:CPIAUCSL, :TB3MS, :AWHMAN])
 println(regressione1)
-regressione2 = calcola_errore(:CPIAUCSL, [:M1SL, :UNRATE, :FEDFUNDS, :OILPRICEx])
+regressione2 = evaluate_model(:CPIAUCSL, [:M1SL, :UNRATE, :FEDFUNDS, :OILPRICEx])
 println(regressione2)
-regressione3 = calcola_errore(:FEDFUNDS, [:CPIAUCSL, :UNRATE, :INDPRO, :TB3MS, :INVEST, :DTCTHFNM, :NONREVSL, :PCEPI])
+regressione3 = evaluate_model(:FEDFUNDS, [:CPIAUCSL, :UNRATE, :INDPRO, :TB3MS, :INVEST, :DTCTHFNM, :NONREVSL, :PCEPI])
 println(regressione3)
  
-#= Regressors of the last regression:
-Inflation
-unemployment rate
-industrial production
-3-Month Treasury Bill
-Securities in Bank Credit at All Commercial Banks
-Total Consumer Loans and Leases Outstanding
-Total non revolving credit
-Personal consumption expenditures =# 
-
-
-
