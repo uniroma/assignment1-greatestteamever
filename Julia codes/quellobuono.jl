@@ -4,11 +4,11 @@ using Dates
 using LinearAlgebra
 using Plots
 using Statistics
-#Prova
-# Load the dataset
-df = CSV.read("/Users/edoardodicosimo/Documents/Magistrale/ctfme/current.csv", DataFrame)
+# WORK WITH THE DATASET
+### Load the dataset
+df = CSV.read("C:\\Users\\paose\\Desktop\\Working directories\\Julia\\Computational tools for Macroeconometrics\\Assignment_1_Macroeconometrics\\Dataset.csv", DataFrame)
 
-# Clean the DataFrame by removing the row with transformation codes
+### Clean the DataFrame by removing the row with transformation codes
 df_cleaned = df[2:end, :]
 date_format = "mm/dd/yyyy"
 df_cleaned[!, :sasdate] = Dates.Date.(df_cleaned[!, :sasdate], date_format)
@@ -17,11 +17,11 @@ df_cleaned[!, :sasdate] = Dates.Date.(df_cleaned[!, :sasdate], date_format)
 df_original = copy(df_cleaned)
 df_cleaned = coalesce.(df_cleaned, NaN)
 df_original = coalesce.(df_original, NaN)
-## Create a DataFrame with the transformation codes
+### Create a DataFrame with the transformation codes
 transformation_codes = DataFrame(Series = names(df)[2:end], 
                                  Transformation_Code = collect(df[1, 2:end]))
 
-# Function to apply transformations based on the transformation code
+### Function to apply transformations based on the transformation code
 function apply_transformation(series, code)
     if code == 1
         # No transformation
@@ -50,8 +50,7 @@ function apply_transformation(series, code)
 end
 
 
-# Helper function to lag a series; 
-# Julia does not have a built-in lag function like R or pandas
+### Helper function to lag a series (since Julia doesn't have a built-in function to lag)
 function lag(v::Vector, l::Integer)
     nan = [NaN for _ in 1:l]
     return [nan; v[1:(end-l)]]
@@ -62,14 +61,13 @@ function lead(v::Vector, l::Integer)
     return [v[(l+1):end]; nan]
 end
 
-## mdiff function to calculate the first difference of a series
-## keeping the missing values
+### mdiff function to calculate the first difference of a series
 function mdiff(v::Vector)
     return v .- lag(v, 1)
 end
 
 
-# Applying the transformations to each column in df_cleaned based on transformation_codes
+### Applying the transformations to each column in df_cleaned based on transformation_codes
 for row in eachrow(transformation_codes)
     series_name = Symbol(row[:Series])
     code = row[:Transformation_Code]
@@ -77,22 +75,12 @@ for row in eachrow(transformation_codes)
     df_cleaned[!, series_name] = apply_transformation(df_cleaned[!, series_name], code)
 end
 
-
-## The transformation create missing values at the top
-## These remove the missing values at the top of the dataframe
+### The transformation create missing values at the top, so let's remove them
 df_cleaned = df_cleaned[3:end, :]
 
-#target = :INDPRO
-#x_var = [:CPIAUCSL, :FEDFUNDS]
 
-#end_date = "12/01/1999"
-
-
-
-#orrore2 = []
-
-
-function calcolaforecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, end_date = Dates.Date("12/01/1999", date_format))
+# CREATE THE FORECASTING FUNCTION
+function compute_forecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, end_date = Dates.Date("12/01/1999", date_format))
     y_hat = []
     y_actual = []
     rt_df = filter(row -> row[:sasdate] <= end_date, df_cleaned)
@@ -102,11 +90,9 @@ function calcolaforecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1
         os = end_date + Dates.Month(h)
         push!(y_actual, (filter(row -> row[:sasdate] == os, df_cleaned)))
     end
+
     y_raw = rt_df[!, target]
-    x_raw = select(rt_df, x_var)
-    #return y_raw, x_raw
-    #println(y_raw)
-    
+    x_raw = select(rt_df, x_var)    
 
     Y_lagged = hcat([lag(y_raw, p) for i in 1:p]...)
     X_lagged = hcat([lag(x_raw[:, j], i) for j in 1:size(x_raw, 2) for i in 1:p]...)
@@ -122,19 +108,19 @@ function calcolaforecast(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1
         beta_ols = X_ \ y
         forecast = (X_T' * beta_ols) * 100
         push!(y_hat,forecast)  
-        #println(y_hat)
     end
-    y_actualissimo = vcat(y_actual[1],y_actual[2],y_actual[3])
-    errore = y_hat - y_actualissimo[!,target] 
-    errore = hcat(errore)
-    return errore
+    
+    y_actual_matrix = vcat(y_actual[1],y_actual[2],y_actual[3])
+    error_value = y_hat - y_actual_matrix[!,target] 
+    error_value = hcat(error_value)
+    
+    return error_value
     
 
 end
-erroraccio = calcolaforecast(:INDPRO,[:CPIAUCSL, :FEDFUNDS, :BUSLOANS, :OILPRICEx])
-println(erroraccio)
 
-function calcola_errore(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, t0 = "12/01/1999")
+# CREATE THE ERROR-COMPUTING FUNCTION
+function compute_error(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 4 8],p = 4, t0 = "12/01/1999")
 
     t0 = Dates.Date(t0,date_format)
     e = []
@@ -143,7 +129,7 @@ function calcola_errore(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 
 
     for j in 1:10
         t0 = t0 + Dates.Month(1)
-        ehat = calcolaforecast(target,x_var,H,p, t0)
+        ehat = compute_forecast(target,x_var,H,p, t0)
         ehat = ehat'
         push!(e,ehat)
         push!(T,t0)
@@ -154,8 +140,16 @@ function calcola_errore(target = :INDPRO, x_var = [:CPIAUCSL, :FEDFUNDS],H = [1 
     return  mean_sqrd_a
 
 end
-regressione1 = calcola_errore(:INDPRO, [:CPIAUCSL, :TB3MS])
-regressione2 = calcola_errore(:CPIAUCSL, [:M1SL, :UNRATE, :FEDFUNDS, :OILPRICEx])
-regressione3 = calcola_errore(:FEDFUNDS, [:CPIAUCSL, :UNRATE, :INDPRO])
-#prova  
+
+# COMPUTING THE 3 DIFFERENT REGRESSIONS
+regression1 = compute_error(:INDPRO, [:CPIAUCSL, :TB3MS])
+println(regression1)
+
+regression2 = compute_error(:CPIAUCSL, [:M1SL, :UNRATE, :FEDFUNDS, :OILPRICEx])
+println(regression2)
+
+regression3 = compute_error(:FEDFUNDS, [:CPIAUCSL, :UNRATE, :INDPRO])
+println(regression3)
+
+
 
